@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - Full Stack CRUD App</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .task-form {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            margin-left: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-edit {
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .btn-edit:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .task-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .task-description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .task-priority {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .priority-high {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .priority-medium {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .priority-low {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .task-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .status-in-progress {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-completed {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .task-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            margin-bottom: 0;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .filter-group select {
+            width: auto;
+            min-width: 120px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .tasks-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Mock API service to simulate backend
+        const API_BASE_URL = 'http://localhost:3001/api'; // In real app, this would be your backend URL
+
+        // Mock data store (simulating database)
+        let mockTasks = [
+            {
+                id: 1,
+                title: 'Complete React Tutorial',
+                description: 'Learn React hooks, components, and state management',
+                priority: 'high',
+                status: 'in-progress',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            {
+                id: 2,
+                title: 'Setup Database',
+                description: 'Configure MongoDB connection and create task schema',
+                priority: 'medium',
+                status: 'completed',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            {
+                id: 3,
+                title: 'Write API Documentation',
+                description: 'Document all REST API endpoints and their usage',
+                priority: 'low',
+                status: 'pending',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }
+        ];
+
+        // Mock API functions (in real app, these would make HTTP requests)
+        const mockAPI = {
+            getTasks: async (filters = {}) => {
+                await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+                let filteredTasks = [...mockTasks];
+                
+                if (filters.status && filters.status !== 'all') {
+                    filteredTasks = filteredTasks.filter(task => task.status === filters.status);
+                }
+                
+                if (filters.priority && filters.priority !== 'all') {
+                    filteredTasks = filteredTasks.filter(task => task.priority === filters.priority);
+                }
+                
+                return { data: filteredTasks };
+            },
+            
+            createTask: async (taskData) => {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                const newTask = {
+                    id: Date.now(),
+                    ...taskData,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                mockTasks.push(newTask);
+                return { data: newTask };
+            },
+            
+            updateTask: async (id, taskData) => {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                const index = mockTasks.findIndex(task => task.id === id);
+                if (index !== -1) {
+                    mockTasks[index] = {
+                        ...mockTasks[index],
+                        ...taskData,
+                        updatedAt: new Date().toISOString()
+                    };
+                    return { data: mockTasks[index] };
+                }
+                throw new Error('Task not found');
+            },
+            
+            deleteTask: async (id) => {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                const index = mockTasks.findIndex(task => task.id === id);
+                if (index !== -1) {
+                    const deletedTask = mockTasks.splice(index, 1)[0];
+                    return { data: deletedTask };
+                }
+                throw new Error('Task not found');
+            }
+        };
+
+        function TaskManager() {
+            const [tasks, setTasks] = useState([]);
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState('');
+            const [success, setSuccess] = useState('');
+            const [editingTask, setEditingTask] = useState(null);
+            const [filters, setFilters] = useState({ status: 'all', priority: 'all' });
+
+            const [formData, setFormData] = useState({
+                title: '',
+                description: '',
+                priority: 'medium',
+                status: 'pending'
+            });
+
+            useEffect(() => {
+                fetchTasks();
+            }, [filters]);
+
+            const fetchTasks = async () => {
+                setLoading(true);
+                setError('');
+                try {
+                    const response = await mockAPI.getTasks(filters);
+                    setTasks(response.data);
+                } catch (err) {
+                    setError('Failed to fetch tasks');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setError('');
+                setSuccess('');
+
+                if (!formData.title.trim()) {
+                    setError('Title is required');
+                    return;
+                }
+
+                try {
+                    setLoading(true);
+                    
+                    if (editingTask) {
+                        await mockAPI.updateTask(editingTask.id, formData);
+                        setSuccess('Task updated successfully!');
+                        setEditingTask(null);
+                    } else {
+                        await mockAPI.createTask(formData);
+                        setSuccess('Task created successfully!');
+                    }
+
+                    setFormData({
+                        title: '',
+                        description: '',
+                        priority: 'medium',
+                        status: 'pending'
+                    });
+
+                    fetchTasks();
+                } catch (err) {
+                    setError('Failed to save task');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleEdit = (task) => {
+                setEditingTask(task);
+                setFormData({
+                    title: task.title,
+                    description: task.description,
+                    priority: task.priority,
+                    status: task.status
+                });
+                setError('');
+                setSuccess('');
+            };
+
+            const handleDelete = async (id) => {
+                if (!confirm('Are you sure you want to delete this task?')) return;
+
+                try {
+                    setLoading(true);
+                    await mockAPI.deleteTask(id);
+                    setSuccess('Task deleted successfully!');
+                    fetchTasks();
+                } catch (err) {
+                    setError('Failed to delete task');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleCancel = () => {
+                setEditingTask(null);
+                setFormData({
+                    title: '',
+                    description: '',
+                    priority: 'medium',
+                    status: 'pending'
+                });
+                setError('');
+                setSuccess('');
+            };
+
+            return (
+                <div className="container">
+                    <h1>Task Manager</h1>
+                    
+                    {error && <div className="error">{error}</div>}
+                    {success && <div className="success">{success}</div>}
+
+                    <form onSubmit={handleSubmit} className="task-form">
+                        <h2>{editingTask ? 'Edit Task' : 'Add New Task'}</h2>
+                        
+                        <div className="form-group">
+                            <label>Title *</label>
+                            <input
+                                type="text"
+                                value={formData.title}
+                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                placeholder="Enter task title"
+                                required
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>Description</label>
+                            <textarea
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                placeholder="Enter task description"
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>Priority</label>
+                            <select
+                                value={formData.priority}
+                                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                            >
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Status</label>
+                            <select
+                                value={formData.status}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                            >
+                                <option value="pending">Pending</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" className="btn btn-primary" disabled={loading}>
+                            {editingTask ? 'Update Task' : 'Add Task'}
+                        </button>
+                        
+                        {editingTask && (
+                            <button type="button" className="btn btn-secondary" onClick={handleCancel}>
+                                Cancel
+                            </button>
+                        )}
+                    </form>
+
+                    <div className="filters">
+                        <div className="filter-group">
+                            <label>Filter by Status:</label>
+                            <select
+                                value={filters.status}
+                                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                            >
+                                <option value="all">All</option>
+                                <option value="pending">Pending</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+
+                        <div className="filter-group">
+                            <label>Filter by Priority:</label>
+                            <select
+                                value={filters.priority}
+                                onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+                            >
+                                <option value="all">All</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {loading && <div className="loading">Loading tasks...</div>}
+
+                    <div className="tasks-grid">
+                        {tasks.map(task => (
+                            <div key={task.id} className="task-card">
+                                <div className="task-title">{task.title}</div>
+                                <div className="task-description">{task.description}</div>
+                                <div className="task-meta">
+                                    <span className={`task-priority priority-${task.priority}`}>
+                                        {task.priority}
+                                    </span>
+                                    <span className={`task-status status-${task.status}`}>
+                                        {task.status.replace('-', ' ')}
+                                    </span>
+                                </div>
+                                <div className="task-actions">
+                                    <button 
+                                        className="btn btn-edit"
+                                        onClick={() => handleEdit(task)}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button 
+                                        className="btn btn-danger"
+                                        onClick={() => handleDelete(task.id)}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {!loading && tasks.length === 0 && (
+                        <div className="loading">No tasks found. Add some tasks to get started!</div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<TaskManager />, document.getElementById('root'));
+    </script>
+</body>
+</html>
