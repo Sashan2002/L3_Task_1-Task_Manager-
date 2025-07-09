@@ -16,91 +16,77 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Mock API service to simulate backend
-        const API_BASE_URL = 'http://localhost:3001/api'; // In real app, this would be your backend URL
+        // Real API service connecting to backend
+        const API_BASE_URL = 'http://localhost:3001/api';
 
-        // Mock data store (simulating database)
-        let mockTasks = [
-            {
-                id: 1,
-                title: 'Complete React Tutorial',
-                description: 'Learn React hooks, components, and state management',
-                priority: 'high',
-                status: 'in-progress',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            },
-            {
-                id: 2,
-                title: 'Setup Database',
-                description: 'Configure MongoDB connection and create task schema',
-                priority: 'medium',
-                status: 'completed',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            },
-            {
-                id: 3,
-                title: 'Write API Documentation',
-                description: 'Document all REST API endpoints and their usage',
-                priority: 'low',
-                status: 'pending',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            }
-        ];
-
-        // Mock API functions (in real app, these would make HTTP requests)
-        const mockAPI = {
+        // Real API functions making HTTP requests to backend
+        const api = {
             getTasks: async (filters = {}) => {
-                await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-                let filteredTasks = [...mockTasks];
-                
+                const params = new URLSearchParams();
                 if (filters.status && filters.status !== 'all') {
-                    filteredTasks = filteredTasks.filter(task => task.status === filters.status);
+                    params.append('status', filters.status);
                 }
-                
                 if (filters.priority && filters.priority !== 'all') {
-                    filteredTasks = filteredTasks.filter(task => task.priority === filters.priority);
+                    params.append('priority', filters.priority);
                 }
                 
-                return { data: filteredTasks };
+                const response = await fetch(`${API_BASE_URL}/tasks?${params}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
             },
             
             createTask: async (taskData) => {
-                await new Promise(resolve => setTimeout(resolve, 300));
-                const newTask = {
-                    id: Date.now(),
-                    ...taskData,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                };
-                mockTasks.push(newTask);
-                return { data: newTask };
+                const response = await fetch(`${API_BASE_URL}/tasks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(taskData)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to create task');
+                }
+                return await response.json();
             },
             
             updateTask: async (id, taskData) => {
-                await new Promise(resolve => setTimeout(resolve, 300));
-                const index = mockTasks.findIndex(task => task.id === id);
-                if (index !== -1) {
-                    mockTasks[index] = {
-                        ...mockTasks[index],
-                        ...taskData,
-                        updatedAt: new Date().toISOString()
-                    };
-                    return { data: mockTasks[index] };
+                const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(taskData)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to update task');
                 }
-                throw new Error('Task not found');
+                return await response.json();
             },
             
             deleteTask: async (id) => {
-                await new Promise(resolve => setTimeout(resolve, 300));
-                const index = mockTasks.findIndex(task => task.id === id);
-                if (index !== -1) {
-                    const deletedTask = mockTasks.splice(index, 1)[0];
-                    return { data: deletedTask };
+                const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to delete task');
                 }
-                throw new Error('Task not found');
+                return await response.json();
+            },
+            
+            getStats: async () => {
+                const response = await fetch(`${API_BASE_URL}/stats`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
             }
         };
 
